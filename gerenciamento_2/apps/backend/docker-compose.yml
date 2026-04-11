@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:15
+    container_name: projetos_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: projetos_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - projetos_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: projetos_app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/projetos_db
+      PYTHONPATH: /app
+    ports:
+      - "5000:5000"
+    networks:
+      - projetos_network
+
+volumes:
+  postgres_data:
+
+networks:
+  projetos_network:
+    driver: bridge
